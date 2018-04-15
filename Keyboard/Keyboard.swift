@@ -8,35 +8,40 @@
 
 import UIKit
 
-public struct Keyboard {
+@objcMembers
+public final class Keyboard: NSObject {
     public static let shared = Keyboard()
 
     public weak var window: UIWindow?
     private var windowOrKeyWindow: UIWindow? { return window ?? UIApplication.shared.keyWindow }
 
-    private let delegator = Delegator()
-
-    private init() {
-        delegator.onKeyboardWillShow = keyboardWillShow
-        delegator.onKeyboardWillHide = keyboardWillHide
+    public enum Option {
+        case autoScroll
+        case closeOnTapOther
+        public static var allCases: [Option] { return [.autoScroll, .closeOnTapOther] }
     }
+    private var enabledOptions = Set(Option.allCases)
 
-    public func enable() {
+    private var keyboardClosingGesture: UILongPressGestureRecognizer?
+
+    required public override init() {
+        super.init()
         let notification = NotificationCenter.default
-        notification.addObserver(delegator, selector: #selector(Delegator.keyboardWillShow(notification:)), name: .UIKeyboardWillShow, object: nil)
-        notification.addObserver(delegator, selector: #selector(Delegator.keyboardWillHide(notification:)), name: .UIKeyboardWillHide, object: nil)
+        notification.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: .UIKeyboardWillShow, object: nil)
+        notification.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: .UIKeyboardWillHide, object: nil)
     }
-}
 
-extension Keyboard {
-    private func keyboardWillShow(notification: Notification?) {
+    public func enable(options: Set<Option> = .init(Option.allCases)) {
+        self.enabledOptions = options
+    }
+
+    private func scrollWindowUntilInputViewIsVisible(notification: Notification) {
         guard
             let window = self.windowOrKeyWindow,
             let firstResponder = window.firstResponder,
             let inputViewMaxY = firstResponder.superview?.convert(firstResponder.frame, to: window).maxY,
-            let keyboardRect = (notification?.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue
+            let keyboardRect = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? CGRect
             else { return }
-
 
         let y: CGFloat
         if inputViewMaxY < window.frame.height - keyboardRect.height {
@@ -45,33 +50,53 @@ extension Keyboard {
             y = inputViewMaxY - (window.frame.height - keyboardRect.height)
         }
 
-        let duration = notification?.userInfo?[UIKeyboardAnimationDurationUserInfoKey] as? TimeInterval ?? 0
+        let duration = notification.userInfo?[UIKeyboardAnimationDurationUserInfoKey] as? TimeInterval ?? 0
         UIView.animate(withDuration: duration) {
             let transform = CGAffineTransform(translationX: 0, y: -y)
             window.transform = transform
         }
     }
 
-    private func keyboardWillHide(notification: Notification?) {
+    private func revertToScrollWindowUntilInputViewIsVisible(notification: Notification) {
         guard let window = self.windowOrKeyWindow else { return }
-        let duration = notification?.userInfo?[UIKeyboardAnimationCurveUserInfoKey] as? TimeInterval ?? 0
+        let duration = notification.userInfo?[UIKeyboardAnimationCurveUserInfoKey] as? TimeInterval ?? 0
         UIView.animate(withDuration: duration) {
             window.transform = CGAffineTransform.identity
         }
     }
+
+    private func addKeyboardClosingGesture() {
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(onKeyboardClosingGesture))
+        gesture.minimumPressDuration = 0
+        windowOrKeyWindow?.addGestureRecognizer(gesture)
+        keyboardClosingGesture = gesture
+    }
+
+    private func removeKeyboardClosingGesture() {
+        keyboardClosingGesture.map { $0.view?.removeGestureRecognizer($0) }
+    }
 }
 
-extension Keyboard {
-    private class Delegator: NSObject {
-        var onKeyboardWillShow: ((_ notification: Notification?) -> Void)?
-        var onKeyboardWillHide: ((_ notification: Notification?) -> Void)?
-
-        @objc func keyboardWillShow(notification: Notification?) {
-            onKeyboardWillShow?(notification)
+@objc extension Keyboard {
+    private func keyboardWillShow(notification: Notification) {
+        if enabledOptions.contains(.autoScroll) {
+            scrollWindowUntilInputViewIsVisible(notification: notification)
         }
-
-        @objc func keyboardWillHide(notification: Notification?) {
-            onKeyboardWillHide?(notification)
+        if enabledOptions.contains(.closeOnTapOther) {
+            addKeyboardClosingGesture()
         }
+    }
+
+    private func keyboardWillHide(notification: Notification) {
+        if enabledOptions.contains(.autoScroll) {
+            revertToScrollWindowUntilInputViewIsVisible(notification: notification)
+        }
+        if enabledOptions.contains(.closeOnTapOther) {
+            removeKeyboardClosingGesture()
+        }
+    }
+
+    private func onKeyboardClosingGesture() {
+        windowOrKeyWindow?.firstResponder?.resignFirstResponder()
     }
 }
