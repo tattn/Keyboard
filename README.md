@@ -15,6 +15,8 @@ github "tattn/Keyboard"
 
 # Auto scroll until the input text field is visible
 
+<img src="https://github.com/tattn/Keyboard/raw/master/docs/assets/demo_autoscroll.gif" width="300px" alt="demo" />
+
 ```swift
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
