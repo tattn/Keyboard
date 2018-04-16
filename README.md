@@ -13,22 +13,25 @@
 github "tattn/Keyboard"
 ```
 
-# Auto scroll until the input text field is visible
+# Auto scroll until the input text field is visible / Close when tapping other views
 
 <img src="https://github.com/tattn/Keyboard/raw/master/docs/assets/demo_autoscroll.gif" width="300px" alt="demo" />
 
 ```swift
-@UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
-
-    var window: UIWindow?
-
-
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        Keyboard.shared.enable() // add this line
-        return true
-    }
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+    Keyboard.shared.enable() // add this line
+    return true
 }
+```
+
+# Option
+
+```swift
+// Enable all features
+Keyboard.shared.enable()
+
+// Enable a part of features
+Keyboard.shared.enable(options: [.autoScroll, .closeOnTapOther])
 ```
 
 
