@@ -2,8 +2,20 @@
 
 <h5 align="center">Keyboard is a framework to make keyboard easier to handle</h5>
 
-<br />
+<div align="center">
+  <a href="https://github.com/Carthage/Carthage">
+    <img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat" alt="Carthage compatible" />
+  </a>
+  <a href="https://developer.apple.com/swift">
+    <img src="https://img.shields.io/badge/Swift-4-F16D39.svg" alt="Swift Version" />
+  </a>
+  <img src="https://img.shields.io/badge/platform-iOS-yellow.svg" alt="Platform" />
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="license:MIT" />
+  </a>
+</div>
 
+<br />
 
 # Installation
 
