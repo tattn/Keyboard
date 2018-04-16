@@ -32,7 +32,11 @@ public final class Keyboard: NSObject {
     }
 
     public func enable(options: Set<Option> = .init(Option.allCases)) {
-        self.enabledOptions = options
+        enabledOptions = options
+    }
+
+    public func disable(options: Set<Option> = .init(Option.allCases)) {
+        enabledOptions.subtract(options)
     }
 
     private func scrollWindowUntilInputViewIsVisible(notification: Notification) {
